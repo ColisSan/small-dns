@@ -2,6 +2,7 @@ import secrets
 import struct
 
 #DNS HEADER ANATOMY -> 
+#   ID 16 bits;
 #   QR (query or not) 1 bit;
 #   OPCODE (0 for query) 4 bits;
 #   AA (Authoritative Answer - 0 for request) 1 bit
