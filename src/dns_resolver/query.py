@@ -1,6 +1,6 @@
 import secrets
 import struct
-from dns_resolver import header_flags
+from dns_resolver.constants import header_flags
 
 #DNS HEADER ANATOMY -> 
 #   ID 16 bits;
@@ -25,25 +25,28 @@ from dns_resolver import header_flags
 #   NSCOUNT (specifies the number of name server resource records in the authority records section)
 #   ARCOUNT (specifying the number of resource records in the additional records section) 16 bit 
     
-FLAG_SHIFTS: dict[str, tuple[int,int]] = header_flags.FLAG_SHIFTS
+FLAG_SPECS: dict[str, tuple[int,int]] = header_flags.FLAG_SPECS
 DOMAIN_NAME_ALLOWED_BYTES = 63
 ENCODED_NAME_END = b"\x00"
 NAME_BYTE_LENGTH_LIMIT = 255
 QCLASS = 1
 
-def build_query(name: str, query_id: int | None = None, rd: int = 0, qtype: int = 1)-> bytes:
-    query = build_header(query_id, rd) + encode_name(name) + struct.pack('>HH', qtype, QCLASS)
+def build_query(name: str, query_id: int | None = None, qtype: int = 1, rd: int = 0)-> bytes:
+    flags = header_flags.Flags(rd=rd)
+    query = build_header(query_id, flags) + encode_name(name) + struct.pack('>HH', qtype, QCLASS)
     return query
 
-def build_header(query_id: int | None = None, rd: int = 0) -> bytes:    
-    
+def build_header(query_id: int | None = None, flags: header_flags.Flags | None = None) -> bytes:    
+    if flags is None:
+        flags = header_flags.Flags()
+        
     if query_id is None:
         query_id = secrets.randbits(16)
-    
-    flags = 0
-    for name, (value, shift) in FLAG_SHIFTS.items():
-        value = rd if name == "rd" else value
-        flags = flags | (value << shift)
+
+    send_flags = 0
+    for name, (width, shift) in FLAG_SPECS.items():
+        value = getattr(flags, name)
+        send_flags = send_flags | (value << shift)
 
     #number of questions provided
     qdcount = 1
@@ -54,7 +57,7 @@ def build_header(query_id: int | None = None, rd: int = 0) -> bytes:
     # number of resource records in the additional records section
     arcount = 0
     
-    header = struct.pack('>HHHHHH', query_id, flags, qdcount, ancount, nscount, arcount)
+    header = struct.pack('>HHHHHH', query_id, send_flags, qdcount, ancount, nscount, arcount)
     
     return header
 

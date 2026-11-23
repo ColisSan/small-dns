@@ -1,5 +1,6 @@
 from dns_resolver import query
 import pytest
+from dns_resolver.constants import header_flags
 
 GOOGLE_QUERY = bytes.fromhex(
     "be ef 00 00 00 01 00 00 00 00 00 00"   
@@ -9,11 +10,11 @@ GOOGLE_QUERY = bytes.fromhex(
 
 
 def test_assert_build_header_with_explicit_query_id():
-    result = query.build_header(query_id=0xbeef, rd=0)
+    result = query.build_header(0xbeef, header_flags.Flags())
     assert result == bytes.fromhex("be ef 00 00 00 01 00 00 00 00 00 00")
     
 def test_assert_build_header_with_set_explicit_params():
-    result = query.build_header(query_id=0xbeef, rd=1)
+    result = query.build_header(0xbeef, header_flags.Flags(rd=1))
     assert result == bytes.fromhex("be ef 01 00 00 01 00 00 00 00 00 00")
     
 def test_build_header_random_query_id():    
@@ -48,17 +49,17 @@ def test_improper_names_throw_errors():
         query.encode_name(".".join(["a" * 63] * 4))
         
 def test_build_query_full_packet():
-    assert query.build_query("google.com", query_id=0xbeef) == GOOGLE_QUERY
+    assert query.build_query("google.com", 0xbeef, 1) == GOOGLE_QUERY
 
 def test_build_query_passes_rd():
-    result = query.build_query("google.com", query_id=0xbeef, rd=1)
+    result = query.build_query("google.com", 0xbeef, 1, 1)
 
     assert result[2] == 0x01            
     assert result[2] & 0b00000001 == 1
     assert result[:2] + result[3:] == GOOGLE_QUERY[:2] + GOOGLE_QUERY[3:]
 
 def test_build_query_passes_qtype():
-    result = query.build_query("google.com", query_id=0xbeef, qtype=28) 
+    result = query.build_query("google.com", 0xbeef, qtype=28) 
 
     assert result[-4:] == bytes.fromhex("00 1c 00 01")  
     assert result[:-4] == GOOGLE_QUERY[:-4]              

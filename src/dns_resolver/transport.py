@@ -4,11 +4,11 @@ from dns_resolver import query
 import struct
 
 def main():
-    send_query('1.1.1.1', "google.com", rd=1)
+    send_query('1.1.1.1', "google.com", rd = 1)
 
 def send_query(server_ip: str, name: str, qtype: int = 1, rd: int = 0) -> bytes:
     query_id = secrets.randbits(16)
-    packet = query.build_query(name, query_id, rd, qtype)
+    packet = query.build_query(name, query_id, qtype, rd)
     
     sock_instance = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
