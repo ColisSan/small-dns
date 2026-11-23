@@ -1,5 +1,6 @@
 import secrets
 import struct
+from dns_resolver import header_flags
 
 #DNS HEADER ANATOMY -> 
 #   ID 16 bits;
@@ -24,16 +25,7 @@ import struct
 #   NSCOUNT (specifies the number of name server resource records in the authority records section)
 #   ARCOUNT (specifying the number of resource records in the additional records section) 16 bit 
     
-FLAG_SHIFTS: dict[str, tuple[int,int]] = {
-    "qr": (0,15), 
-    "opcode": (0,11), 
-    "aa": (0,10), 
-    "tc": (0,9), 
-    "rd": (0,8), 
-    "ra": (0,7), 
-    "z": (0,4), 
-    "rcode": (0,0)
-}
+FLAG_SHIFTS: dict[str, tuple[int,int]] = header_flags.FLAG_SHIFTS
 DOMAIN_NAME_ALLOWED_BYTES = 63
 ENCODED_NAME_END = b"\x00"
 NAME_BYTE_LENGTH_LIMIT = 255
