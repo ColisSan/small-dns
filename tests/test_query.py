@@ -30,7 +30,6 @@ def test_build_header_random_query_id():
     ("",             b"\x00"),
     ("Google.COM",   b"\x06Google\x03COM\x00"),
 ])
-
 def test_encode_name(name, expected):
     assert query.encode_name(name) == expected
     

@@ -1,6 +1,9 @@
-import secrets
-import struct
+from dns_resolver import transport
+from dns_resolver import response
 
 def main() -> None:
-    return
+    reply_bytes = transport.send_query("1.1.1.1", "google.com", rd=1)
+    reply = response.parse_response(reply_bytes)
+    
+    print(reply)
 
