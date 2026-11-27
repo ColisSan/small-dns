@@ -5,6 +5,16 @@ from dns_resolver import query
 
 ROOT_HEADER = bytes.fromhex("5e 6e 82 00 00 01 00 00 00 0d 00 0b")
 ROOT_HEADER_PARSED = response.Header(query_id=0x5e6e, flags=header_flags.Flags(qr=1, tc=1), qdcount=1, ancount=0, nscount=13, arcount=11)
+BBC_NAME = bytes(12) + bytes.fromhex(
+    "03 62 62 63 02 63 6f 02 75 6b 00"      # bbc.co.uk
+)
+GOOGLE_REPLY = bytes.fromhex(
+    "59 87 81 80 00 01 00 01 00 00 00 00"  
+    "06 67 6f 6f 67 6c 65 03 63 6f 6d 00"   
+    "00 01 00 01"                           
+    "c0 0c 00 01 00 01 00 00 00 3f 00 04"   
+    "8e fa cb ce"                           
+)
 
 @pytest.mark.parametrize("value, expected", [
     (0b1000000110000000,   header_flags.Flags(qr=1, rd=1, ra=1)),
@@ -39,3 +49,27 @@ def test_short_header_cannot_be_parsed():
     short_bytes = bytes(11)
     with pytest.raises(ValueError, match="Response too short for parsing!"):
         response.parse_header(short_bytes)
+        
+def test_parse_name_decodes():
+    name, offset = response.parse_name(GOOGLE_REPLY, 12)
+    
+    assert name == 'google.com'
+    assert offset == 24
+
+def test_parse_name_decodes_multiple_labels():
+    name, offset = response.parse_name(BBC_NAME, 12)
+
+    assert name == 'bbc.co.uk'
+    assert offset == 23
+
+def test_parse_name_returns_empty_string():
+    name, offset = response.parse_name(b"\x00", 0)
+
+    assert name == ""
+    assert offset == 1
+
+def test_parse_name_offset_is_respected():
+    name,offset = response.parse_name(bytes.fromhex("ff ff 03 62 62 63 00"), 2)
+
+    assert name == "bbc"
+    assert offset == 7
